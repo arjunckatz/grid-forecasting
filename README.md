@@ -83,10 +83,34 @@ for source provenance and the planned local layout.
 
 ## Project status
 
-**Milestone 1: scaffolding and V1 contract.** The repository currently contains
-only packaging, configuration, documentation, and an import smoke test. Demand
-ingestion, aggregation, forecast-frame construction, evaluation, models, and
+**Milestone 2: demand ingestion and audit.** The repository can read the
+verified Delhi SLDC-derived CSV schema into a raw-evidence-preserving table and
+produce deterministic quality diagnostics. It reports malformed values,
+duplicates, gaps, grid alignment, daily coverage, and basic demand statistics;
+it does not repair, interpolate, deduplicate, or aggregate observations.
+
+The full historical mirror is not required for tests and is not stored in Git.
+Hourly aggregation, forecast-frame construction, evaluation, models, and
 weather integration have intentionally not been implemented yet.
+
+## Audit a local demand file
+
+Place `load_data.csv` beneath `data/raw/sldc/`. The reader validates the verified
+`timestamp,load_MW` header and parses `%Y-%m-%d %H:%M:%S` timestamps:
+
+```python
+import json
+
+from delhi_grid.data import audit_demand, read_sldc_csv
+
+observations = read_sldc_csv("data/raw/sldc/load_data.csv")
+report = audit_demand(observations)
+print(json.dumps(report.to_dict(), indent=2))
+```
+
+The normalized table contains `source_line_number`, raw timestamp/load text,
+parsed timezone-aware `timestamp`, numeric `load_mw`, and parse-error flags.
+Every source row remains present and in source order.
 
 ## Development
 
