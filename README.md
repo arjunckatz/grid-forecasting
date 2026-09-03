@@ -52,9 +52,9 @@ Every example must distinguish three fields:
 - `horizon_hours`: the interval between them
 
 For V1, `valid_time = issue_time + 24 hours`. Load observations and rolling
-statistics may use information only through `issue_time`. Calendar properties
-of `valid_time` are legal because they are known in advance. Weather at
-`valid_time` is legal only when it comes from a forecast issued at or before
+statistics may use only values fully available by `issue_time`. Calendar
+properties of `valid_time` are legal because they are known in advance. Weather
+at `valid_time` is legal only when it comes from a forecast issued at or before
 `issue_time`; realized future weather is not an operational feature.
 
 Canonical hourly timestamps label bucket starts. A value labeled `14:00` is the
@@ -225,4 +225,4 @@ python -m pytest
 python -m ruff check .
 ```
 
-No runtime dependencies are included until implementation requires them.
+Runtime dependencies remain limited to pandas, PyYAML, and PyArrow.

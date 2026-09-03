@@ -68,3 +68,6 @@ def test_evaluation_distinguishes_own_and_common_support() -> None:
     assert own_b["prediction_coverage"] == pytest.approx(0.5)
     assert common["n_scored"].eq(1).all()
     assert common["available_predictions"].eq(1).all()
+    common_by_model = common.set_index("model_name")
+    assert common_by_model.loc["a", "mae_mw"] == pytest.approx(1.0)
+    assert common_by_model.loc["b", "mae_mw"] == pytest.approx(2.0)
