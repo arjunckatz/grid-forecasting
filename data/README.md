@@ -95,10 +95,29 @@ Planned local location:
 data/raw/weather_forecasts/
 ```
 
-## Generated data
+## Canonical hourly demand
 
-Later pipelines are expected to create canonical and modeling artifacts beneath
-`data/processed/`, including quality-aware 5-minute and hourly demand datasets.
-Those outputs, raw downloads, checksums generated from private local copies, and
-model artifacts are ignored by Git. Only small, purpose-built test fixtures may
-be committed under `tests/`.
+The generated V1 modeling target is:
+
+```text
+data/processed/hourly_demand.parquet
+```
+
+Each timezone-aware timestamp is the start of an hour. `n_expected` records 12
+expected slots, `n_timestamp_rows` records present source rows, `n_observations`
+records valid numeric loads, and `n_blank_loads` records present rows without a
+numeric load. Coverage and one of `complete`, `usable_partial`, `insufficient`,
+or `missing` complete the row.
+Hours with fewer than 9 numeric observations remain present but have no numeric
+target. The pipeline does not interpolate or impute them.
+
+For the audited source, this produces 24,432 hourly rows: 23,112 `complete`, 640
+`usable_partial`, 225 `insufficient`, and 455 `missing`. Thus 23,752 hours
+(97.22%) have usable targets. Missingness is not random: every one of the 127
+hours exactly at the 9/12 threshold lacks minutes `:45`, `:50`, and `:55`, and
+125 of those hours begin at 22:00 or 23:00. The partial-hour mean follows the V1
+contract but may not represent the unobserved end of an evening ramp; no
+correction is invented here.
+
+Generated outputs, raw downloads, and model artifacts are ignored by Git. Only
+small, purpose-built test fixtures may be committed under `tests/`.

@@ -83,15 +83,14 @@ for source provenance and the planned local layout.
 
 ## Project status
 
-**Milestone 2: demand ingestion and audit.** The repository can read the
-verified Delhi SLDC-derived CSV schema into a raw-evidence-preserving table and
-produce deterministic quality diagnostics. It reports malformed values,
-duplicates, gaps, grid alignment, daily coverage, and basic demand statistics;
-it does not repair, interpolate, deduplicate, or aggregate observations.
+**Milestone 3: canonical hourly demand.** The repository converts audited raw
+telemetry into a complete hourly grid with explicit coverage metadata and
+quality labels. Hourly resolution is the V1 modeling contract; the original
+five-minute evidence remains available for quality, ramp, and event analysis.
 
 The full historical mirror is not required for tests and is not stored in Git.
-Hourly aggregation, forecast-frame construction, evaluation, models, and
-weather integration have intentionally not been implemented yet.
+Forecast-frame construction, evaluation, models, and weather integration have
+intentionally not been implemented yet.
 
 ## Audit a local demand file
 
@@ -111,6 +110,47 @@ print(json.dumps(report.to_dict(), indent=2))
 The normalized table contains `source_line_number`, raw timestamp/load text,
 parsed timezone-aware `timestamp`, numeric `load_mw`, and parse-error flags.
 Every source row remains present and in source order.
+
+## Build canonical hourly demand
+
+An hourly timestamp labels the start of its bucket: `08:00` represents the 12
+expected readings from `08:00` through `08:55`. Blank telemetry is missing—not
+zero—and only numeric measurements contribute to coverage or the mean.
+
+| Valid readings | Quality | Hourly target |
+| ---: | --- | --- |
+| 12 | `complete` | Mean of 12 readings |
+| 9–11 | `usable_partial` | Mean of available readings |
+| 1–8 | `insufficient` | Missing |
+| 0 | `missing` | Missing |
+
+Every expected hour remains in the output, including hours without source rows
+or a usable target. The threshold comes from `configs/v1_24h.yaml`; changing it
+changes classification rather than requiring a code edit.
+
+Coverage metadata distinguishes the 12 expected slots (`n_expected`), source
+rows actually present (`n_timestamp_rows`), valid numeric loads
+(`n_observations`), and present rows with no numeric load (`n_blank_loads`). An
+absent timestamp therefore reduces row and observation counts without being
+mislabelled as a blank load.
+
+```python
+from delhi_grid.data import (
+    build_hourly_demand,
+    load_hourly_demand_config,
+    read_sldc_csv,
+    write_hourly_demand,
+)
+
+config = load_hourly_demand_config("configs/v1_24h.yaml")
+raw = read_sldc_csv("data/raw/sldc/load_data.csv")
+hourly = build_hourly_demand(raw, config)
+write_hourly_demand(hourly)
+```
+
+The default generated artifact is `data/processed/hourly_demand.parquet`, which
+is ignored by Git. No interpolation, imputation, or below-threshold target is
+produced.
 
 ## Development
 
