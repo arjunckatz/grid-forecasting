@@ -1,0 +1,17 @@
+contract_version: 1
+target:
+  name: delhi_total_demand
+  unit: MW
+time:
+  timezone: Asia/Kolkata
+  raw_frequency: 5min
+  modeling_frequency: 1h
+forecast:
+  horizon_hours: 24
+aggregation:
+  method: mean
+  expected_readings_per_hour: 12
+  minimum_valid_readings_per_hour: 9
+  minimum_coverage_fraction: 0.75
+evaluation:
+  primary_metric: mae_mw

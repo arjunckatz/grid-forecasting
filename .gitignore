@@ -1,0 +1,34 @@
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+
+# Virtual environments and packaging artifacts
+.venv/
+venv/
+*.egg-info/
+build/
+dist/
+
+# Local tooling and editor state
+.coverage
+htmlcov/
+.idea/
+.vscode/
+.DS_Store
+
+# Local data and generated artifacts
+data/raw/
+data/interim/
+data/processed/
+artifacts/
+reports/figures/
+*.parquet
+*.pkl
+*.joblib
+
+# Local secrets
+.env
+.env.*
+!.env.example
