@@ -57,8 +57,16 @@ of `valid_time` are legal because they are known in advance. Weather at
 `valid_time` is legal only when it comes from a forecast issued at or before
 `issue_time`; realized future weather is not an operational feature.
 
-These rules will be enforced in feature construction and tests in later,
-focused milestones. Realized weather may be used for diagnostic slices or an
+Canonical hourly timestamps label bucket starts. A value labeled `14:00` is the
+mean of readings through `14:55` and is conservatively treated as fully
+available at `15:00`. Historical load is legal only when its bucket availability
+time, not merely its timestamp, is at or before `issue_time`.
+
+The forecast frame retains every target hour, including hours whose target is
+missing, so availability is measured rather than hidden by an early drop. Each
+baseline prediction carries both `max_source_time` and
+`max_source_available_time`; evaluation rejects availability later than
+`issue_time`. Realized weather may be used for diagnostic slices or an
 explicitly labelled oracle upper bound, never silently as a production input.
 
 ## Expected architecture
@@ -83,14 +91,15 @@ for source provenance and the planned local layout.
 
 ## Project status
 
-**Milestone 3: canonical hourly demand.** The repository converts audited raw
-telemetry into a complete hourly grid with explicit coverage metadata and
-quality labels. Hourly resolution is the V1 modeling contract; the original
-five-minute evidence remains available for quality, ramp, and event analysis.
+**Milestone 4: leakage-safe seasonal baselines and development backtests.** The
+repository builds explicit +24-hour forecast examples and evaluates three
+seasonal baselines over monthly expanding-window folds. Hourly resolution is
+the V1 modeling contract; the original five-minute evidence remains available
+for quality, ramp, and event analysis.
 
-The full historical mirror is not required for tests and is not stored in Git.
-Forecast-frame construction, evaluation, models, and weather integration have
-intentionally not been implemented yet.
+The full historical mirror and generated evaluation artifacts are not stored in
+Git. The 2025 holdout remains locked. Machine-learning models and weather
+integration have intentionally not been implemented yet.
 
 ## Audit a local demand file
 
@@ -151,6 +160,58 @@ write_hourly_demand(hourly)
 The default generated artifact is `data/processed/hourly_demand.parquet`, which
 is ignored by Git. No interpolation, imputation, or below-threshold target is
 produced.
+
+## Baselines and development evaluation
+
+The legal V1 baselines are the latest completed prior-day-ish hour at lag 25h,
+previous-week same-hour demand at lag 168h, and the median of available
+same-hour observations at lags 168h, 336h, 504h, and 672h. The 25h baseline is
+named `previous_day_last_completed_hour`: its source bucket becomes available
+exactly at issue time. A missing historical source stays missing; the pipeline
+does not impute it. For the four-week median, provenance records the latest
+bucket start and its corresponding availability time.
+
+Development evaluation uses nine monthly folds by `valid_time`, from April
+through December 2024. Each fold is fit at its earliest test `issue_time` and
+permits only labels fully observable then. For April, model-fit time is
+`2024-03-31 00:00 Asia/Kolkata`, so the latest legal training `valid_time` is
+`2024-03-30 23:00`. This is an expanding-window contract for later learned
+models. Random train/test splitting is invalid because it would mix later grid
+states into earlier forecast decisions.
+
+MAE and RMSE are reported in MW. WAPE and MAPE are fractions, not percentages;
+MAPE explicitly rejects zero-valued targets rather than silently choosing a
+zero-denominator convention. Missing targets and predictions are excluded with
+the scored count reported. Results are calculated both on each baseline's own
+available support and on common support where every baseline predicts, at fold
+level and once over the concatenated development predictions. Prediction
+coverage is reported separately so a lower error cannot conceal poorer
+availability.
+
+The generated development-only artifacts are:
+
+```text
+data/processed/baseline_predictions.parquet
+data/processed/baseline_metrics.csv
+```
+
+Both are ignored by Git. Their contents are restricted to April--December 2024;
+the configured 2025 holdout is not scored during this milestone.
+
+```python
+import pandas as pd
+
+from delhi_grid.evaluation import (
+    load_backtest_config,
+    run_development_baselines,
+    write_baseline_results,
+)
+
+hourly = pd.read_parquet("data/processed/hourly_demand.parquet")
+config = load_backtest_config("configs/v1_24h.yaml")
+predictions, metrics = run_development_baselines(hourly, config)
+write_baseline_results(predictions, metrics)
+```
 
 ## Development
 

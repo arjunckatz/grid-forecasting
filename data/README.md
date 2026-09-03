@@ -103,11 +103,12 @@ The generated V1 modeling target is:
 data/processed/hourly_demand.parquet
 ```
 
-Each timezone-aware timestamp is the start of an hour. `n_expected` records 12
-expected slots, `n_timestamp_rows` records present source rows, `n_observations`
-records valid numeric loads, and `n_blank_loads` records present rows without a
-numeric load. Coverage and one of `complete`, `usable_partial`, `insufficient`,
-or `missing` complete the row.
+Each timezone-aware timestamp is the start of an hour. Its aggregated value is
+conservatively treated as fully available one hour after that timestamp.
+`n_expected` records 12 expected slots, `n_timestamp_rows` records present
+source rows, `n_observations` records valid numeric loads, and `n_blank_loads`
+records present rows without a numeric load. Coverage and one of `complete`,
+`usable_partial`, `insufficient`, or `missing` complete the row.
 Hours with fewer than 9 numeric observations remain present but have no numeric
 target. The pipeline does not interpolate or impute them.
 
@@ -121,3 +122,26 @@ correction is invented here.
 
 Generated outputs, raw downloads, and model artifacts are ignored by Git. Only
 small, purpose-built test fixtures may be committed under `tests/`.
+
+## Development baseline artifacts
+
+Commit 4 produces two local, ignored outputs:
+
+```text
+data/processed/baseline_predictions.parquet
+data/processed/baseline_metrics.csv
+```
+
+The prediction table records the monthly fold, baseline name, `issue_time`,
+`valid_time`, retained target and quality flag, prediction, latest source bucket
+start (`max_source_time`), and when that bucket was fully observable
+(`max_source_available_time`). Every available prediction must satisfy
+`max_source_available_time <= issue_time`.
+The metrics table reports fold and concatenated-development results on both
+each model's own support and the common support shared by all baselines, with
+prediction availability kept separate from error.
+
+Development folds cover valid times from April through December 2024. A fold's
+model-fit time equals its earliest issue time, and its latest legal training
+`valid_time` is one hour earlier so that the label is fully observable. The 2025
+holdout is deliberately not evaluated or written to these artifacts.

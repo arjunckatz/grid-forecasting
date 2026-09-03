@@ -15,3 +15,8 @@ aggregation:
   minimum_coverage_fraction: 0.75
 evaluation:
   primary_metric: mae_mw
+  development_valid_start: "2024-04-01"
+  development_valid_end: "2024-12-31"
+  holdout_valid_start: "2025-01-01"
+  holdout_valid_end: "2025-12-31"
+  backtest_frequency: monthly
