@@ -160,3 +160,23 @@ load-feature source and availability times. The metrics file contains the
 four-model baseline/XGBoost comparison on own and common support. These outputs
 are ignored, reproducible from the canonical hourly data, and restricted to the
 April--December 2024 development folds.
+
+## Failure-analysis artifacts
+
+The development-only load-model diagnostic produces:
+
+```text
+data/processed/failure_slice_metrics.csv
+data/processed/worst_xgboost_errors.csv
+```
+
+The slice table compares `xgboost_load_only` with the fixed
+`previous_day_last_completed_hour` reference on identical rows from the
+direct pairwise intersection; availability of the other two baselines does not
+affect membership. It includes temporal, demand-level, ramp, target-quality,
+historical-feature-missingness, and observed daily-peak slices. Demand and ramp
+values are evaluation labels only, never model features. The worst-error table
+contains the 20 largest XGBoost absolute errors with reference errors, target
+quality, and observed one-hour ramps for context. Both files are ignored and
+restricted to April--December 2024; they do not contain or summarize the locked
+2025 holdout.

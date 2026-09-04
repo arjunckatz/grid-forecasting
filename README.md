@@ -37,7 +37,7 @@ V1 answers one question:
 | Forecast horizon | Fixed +24 hours |
 | Timezone | `Asia/Kolkata`, timezone-aware |
 | Primary metric | MAE in MW |
-| Primary comparison | Strongest leakage-safe naive baseline |
+| Primary comparison | Fixed `previous_day_last_completed_hour` reference baseline |
 | First ML model | XGBoost, after baselines and evaluation exist |
 
 The machine-readable invariants are recorded in
@@ -91,11 +91,13 @@ for source provenance and the planned local layout.
 
 ## Project status
 
-**Milestone 5: load-only XGBoost benchmark.** The repository builds explicit
-+24-hour forecast examples and evaluates three seasonal baselines plus one
-fixed, compact learned model over monthly expanding-window folds. Hourly
-resolution is the V1 modeling contract; the original five-minute evidence
-remains available for quality, ramp, and event analysis.
+**Current milestone: load-only forecast failure analysis.** The repository
+builds explicit +24-hour forecast examples and evaluates three seasonal
+baselines plus one fixed, compact learned model over monthly expanding-window
+folds. It now diagnoses the learned model against the fixed
+`previous_day_last_completed_hour` reference on their direct pairwise support.
+Hourly resolution is the V1 modeling contract; the original
+five-minute evidence remains available for quality, ramp, and event analysis.
 
 The full historical mirror and generated evaluation artifacts are not stored in
 Git. The 2025 holdout remains locked. Weather integration has intentionally not
@@ -245,6 +247,41 @@ data/processed/xgboost_load_only_metrics.csv
 The metrics artifact compares XGBoost with the existing legal baselines on own
 and common support. Both files are ignored by Git and contain development
 evaluation only; no 2025 features, predictions, or metrics are produced.
+
+## Load-only failure analysis
+
+On the 6,225-row XGBoost/reference pairwise support, the models remain nearly
+tied: MAE is 323.09 MW versus 321.69 MW, for -0.44% XGBoost skill.
+The aggregate result hides substantial April--December 2024 variation:
+
+- XGBoost is weakest in May and June, with MAE of 639.57 and 607.58 MW and
+  mean signed errors of -572.46 and -472.50 MW. It is strongest relative to
+  the reference in November and December, with +41.72% and +64.68% skill.
+- Error is concentrated at high demand. Above the development top-decile
+  threshold of 6,501.33 MW, XGBoost MAE is 959.68 MW versus 451.53 MW for the
+  reference, with -912.56 MW mean signed error.
+- The development high-ramp threshold is 398.27 MW. XGBoost improves on the
+  reference over all high-ramp rows (+15.46% skill), but not on strong negative
+  ramps (-10.64% skill). This distinction cautions against treating volatility
+  alone as the failure mechanism.
+- At the observed daily peak hour, 261 days have pairwise predictions; XGBoost
+  MAE is 456.13 MW versus 362.04 MW, with -378.99 MW mean signed error.
+- Partial target quality and missing historical load features are sensitivity
+  flags, not exclusions from official metrics. Removing the 32 pairwise rows
+  with exactly 9 of 12 observations changes skill only from -0.437% to -0.306%.
+
+May and June also have higher observed demand and larger average hourly ramps
+than November, while December is more volatile than November. These are
+associations, not causal explanations. Their alignment with the hottest-season
+failures motivates testing legally available weather in a future experiment;
+weather has not been joined here. The locked 2025 holdout remains uninspected.
+
+The generated diagnostic tables are ignored by Git:
+
+```text
+data/processed/failure_slice_metrics.csv
+data/processed/worst_xgboost_errors.csv
+```
 
 ## Development
 
