@@ -91,15 +91,15 @@ for source provenance and the planned local layout.
 
 ## Project status
 
-**Milestone 4: leakage-safe seasonal baselines and development backtests.** The
-repository builds explicit +24-hour forecast examples and evaluates three
-seasonal baselines over monthly expanding-window folds. Hourly resolution is
-the V1 modeling contract; the original five-minute evidence remains available
-for quality, ramp, and event analysis.
+**Milestone 5: load-only XGBoost benchmark.** The repository builds explicit
++24-hour forecast examples and evaluates three seasonal baselines plus one
+fixed, compact learned model over monthly expanding-window folds. Hourly
+resolution is the V1 modeling contract; the original five-minute evidence
+remains available for quality, ramp, and event analysis.
 
 The full historical mirror and generated evaluation artifacts are not stored in
-Git. The 2025 holdout remains locked. Machine-learning models and weather
-integration have intentionally not been implemented yet.
+Git. The 2025 holdout remains locked. Weather integration has intentionally not
+been implemented yet.
 
 ## Audit a local demand file
 
@@ -213,6 +213,39 @@ predictions, metrics = run_development_baselines(hourly, config)
 write_baseline_results(predictions, metrics)
 ```
 
+## Load-only XGBoost benchmark
+
+`xgboost_load_only` uses nine calendar features known for `valid_time`, issue-time
+load lags of 1, 2, 3, 6, 24, 48, and 168 hours, the target-seasonal load at
+`valid_time - 168h`, and rolling means and sample standard deviations over 6,
+24, and 168 completed hourly buckets. Raw timestamps, target load, target
+quality, fold identifiers, predictions, and provenance timestamps are excluded
+from the explicit model feature list.
+
+Every issue-relative lag names its source bucket relative to `issue_time`.
+Rolling windows end at `issue_time - 1h`; they require respectively 5, 18, and
+126 observed loads, following a fixed 75% minimum-completeness policy. Missing
+lag and rolling values remain missing for XGBoost's native handling. Calendar
+features remain complete. Annual sine and cosine use day-of-year over the mean
+Gregorian year length of 365.2425 days.
+
+Each monthly model is fit once using legal expanding history, while test-row
+features refresh using information available at that row's issue time. The
+untuned V1 CPU configuration uses `reg:squarederror`, histogram trees, depth 6,
+learning rate 0.05, full row and column sampling, seed 42, one thread, and 200
+boosting rounds. It is a fixed benchmark rather than a development-tuned search.
+
+Generated learned-model artifacts are:
+
+```text
+data/processed/xgboost_load_only_predictions.parquet
+data/processed/xgboost_load_only_metrics.csv
+```
+
+The metrics artifact compares XGBoost with the existing legal baselines on own
+and common support. Both files are ignored by Git and contain development
+evaluation only; no 2025 features, predictions, or metrics are produced.
+
 ## Development
 
 Python 3.11 or newer is required. Create a virtual environment and install the
@@ -225,4 +258,4 @@ python -m pytest
 python -m ruff check .
 ```
 
-Runtime dependencies remain limited to pandas, PyYAML, and PyArrow.
+Runtime dependencies are pandas, PyYAML, PyArrow, and XGBoost.

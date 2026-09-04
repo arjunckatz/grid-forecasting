@@ -20,3 +20,21 @@ evaluation:
   holdout_valid_start: "2025-01-01"
   holdout_valid_end: "2025-12-31"
   backtest_frequency: monthly
+features:
+  issue_lags_hours: [1, 2, 3, 6, 24, 48, 168]
+  valid_lags_hours: [168]
+  rolling_windows_hours: [6, 24, 168]
+  rolling_minimum_fraction: 0.75
+xgboost:
+  model_name: xgboost_load_only
+  boosting_rounds: 200
+  objective: reg:squarederror
+  eval_metric: mae
+  tree_method: hist
+  max_depth: 6
+  eta: 0.05
+  min_child_weight: 1.0
+  subsample: 1.0
+  colsample_bytree: 1.0
+  seed: 42
+  nthread: 1

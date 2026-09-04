@@ -14,17 +14,29 @@ from delhi_grid.evaluation.splits import (
     make_development_folds,
     select_fold_frames,
 )
+from delhi_grid.evaluation.xgb_backtest import (
+    DEFAULT_XGBOOST_METRICS_PATH,
+    DEFAULT_XGBOOST_PREDICTIONS_PATH,
+    XGBoostDevelopmentResult,
+    run_development_xgboost,
+    write_xgboost_results,
+)
 
 __all__ = [
     "DEFAULT_METRICS_PATH",
     "DEFAULT_PREDICTIONS_PATH",
+    "DEFAULT_XGBOOST_METRICS_PATH",
+    "DEFAULT_XGBOOST_PREDICTIONS_PATH",
     "BacktestConfig",
     "MonthlyFold",
     "RegressionMetrics",
+    "XGBoostDevelopmentResult",
     "compute_metrics",
     "load_backtest_config",
     "make_development_folds",
     "run_development_baselines",
+    "run_development_xgboost",
     "select_fold_frames",
     "write_baseline_results",
+    "write_xgboost_results",
 ]

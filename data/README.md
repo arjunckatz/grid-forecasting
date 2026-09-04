@@ -145,3 +145,18 @@ Development folds cover valid times from April through December 2024. A fold's
 model-fit time equals its earliest issue time, and its latest legal training
 `valid_time` is one hour earlier so that the label is fully observable. The 2025
 holdout is deliberately not evaluated or written to these artifacts.
+
+## Load-only XGBoost artifacts
+
+The fixed load-only learned benchmark produces:
+
+```text
+data/processed/xgboost_load_only_predictions.parquet
+data/processed/xgboost_load_only_metrics.csv
+```
+
+The prediction schema matches the baseline representation, including latest
+load-feature source and availability times. The metrics file contains the
+four-model baseline/XGBoost comparison on own and common support. These outputs
+are ignored, reproducible from the canonical hourly data, and restricted to the
+April--December 2024 development folds.
