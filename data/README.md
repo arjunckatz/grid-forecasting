@@ -180,3 +180,18 @@ contains the 20 largest XGBoost absolute errors with reference errors, target
 quality, and observed one-hour ramps for context. Both files are ignored and
 restricted to April--December 2024; they do not contain or summarize the locked
 2025 holdout.
+
+## Demand regime-shift artifact
+
+Training-relative diagnostics produce one ignored table:
+
+```text
+data/processed/regime_shift_metrics.csv
+```
+
+It records each development fold's legal training-target distribution, test
+distribution and exceedance counts, plus pairwise XGBoost/reference prediction
+upper tails. Training rows use the same fold cutoff and non-missing-target rule
+as the frozen XGBoost backtest. Observed test targets and exceedance flags are
+retrospective evaluation labels only and never model features. The artifact is
+restricted to the April--December 2024 folds and contains no 2025 data.

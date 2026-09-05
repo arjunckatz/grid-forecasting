@@ -91,7 +91,7 @@ for source provenance and the planned local layout.
 
 ## Project status
 
-**Current milestone: load-only forecast failure analysis.** The repository
+**Current milestone: demand regime-shift analysis.** The repository
 builds explicit +24-hour forecast examples and evaluates three seasonal
 baselines plus one fixed, compact learned model over monthly expanding-window
 folds. It now diagnoses the learned model against the fixed
@@ -282,6 +282,25 @@ The generated diagnostic tables are ignored by Git:
 data/processed/failure_slice_metrics.csv
 data/processed/worst_xgboost_errors.csv
 ```
+
+### Training-relative demand regimes
+
+The fold-specific training history supports a high-demand regime-shift and
+poor-extrapolation interpretation, with important limits:
+
+- In May, 157 of 734 evaluable targets (21.39%) exceed the fold's training p99
+  and 63 (8.58%) exceed its training maximum. In June, the corresponding counts
+  are 155 of 704 (22.02%) and 7 (0.99%).
+- On pairwise support above the applicable fold training p99, XGBoost MAE is
+  1,289.58 MW versus 469.51 MW for the reference, with -1,266.65 MW XGBoost
+  bias. Error grows across deterministic exceedance-magnitude bins.
+- May/June XGBoost predictions have compressed upper tails relative to targets,
+  but this is empirical saturation-like behavior rather than a proven model
+  ceiling. The pattern motivates testing legally available weather next; it
+  does not establish weather as the cause.
+
+The ignored per-fold training/test regime artifact is
+`data/processed/regime_shift_metrics.csv`. No 2025 data is used.
 
 ## Development
 
